@@ -1,1 +1,174 @@
-hi
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .note-list {
+            list-style: none;
+            padding: 0;
+        }
+        .note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .note-item:last-child {
+            border-bottom: none;
+        }
+        .note-title {
+            font-size: 1.2em;
+            color: #555;
+            flex-grow: 1;
+        }
+        .note-button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            text-decoration: none; /* For the <a> tag acting as a button */
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        .note-button:hover {
+            background-color: #0056b3;
+        }
+        #notesContainer {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Notes Collection</h1>
+        <div id="notesContainer">
+            <ul class="note-list" id="noteLinks">
+                </ul>
+            <p id="loadingMessage">Loading notes...</p>
+            <p id="errorMessage" style="color: red; display: none;">Error loading notes. Please check the console.</p>
+        </div>
+    </div>
+
+    <script>
+        async function fetchNotes() {
+            const notesContainer = document.getElementById('noteLinks');
+            const loadingMessage = document.getElementById('loadingMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            notesContainer.innerHTML = ''; // Clear existing content
+
+            try {
+                // Fetch the list of files in the 'notes' directory.
+                // This approach relies on GitHub's API or a trick with a specific file.
+                // For a simpler approach that relies on the files being indexed by the web server
+                // (which GitHub Pages does), you might try to fetch a directory listing
+                // or rely on a pre-generated JSON file.
+                //
+                // The most robust way to automatically update without a backend
+                // is to list files from an index file you maintain (e.g., notes.json)
+                // or use a build step.
+                //
+                // For direct dynamic listing without a build step, we can try to infer from a known URL structure
+                // or fetch the directory content if the server allows (GitHub Pages typically doesn't allow direct
+                // directory listing for security reasons).
+
+                // A common workaround for GitHub Pages is to fetch a known file
+                // (like an empty .gitkeep or a listing file) and infer from that,
+                // or manually maintain a JSON file.
+
+                // Let's use a simpler approach that works directly with known filenames,
+                // and you'd extend this list. For true automatic discovery without a backend,
+                // you'd typically need a build step or rely on specific server configurations.
+
+                // For a fully dynamic solution that "automatically updates" when you add files,
+                // you would generally need:
+                // 1. A server-side script (which GitHub Pages doesn't directly support for dynamic file listing).
+                // 2. A build process (e.g., Jekyll, or a custom Node.js script) that generates the index.html
+                //    with the updated list of notes whenever you push new files.
+                // 3. Manually updating a JSON file that your JavaScript reads.
+
+                // Given the constraint "automatically update on page", the most practical client-side
+                // solution for GitHub Pages without a build step is to either:
+                // a) Hardcode the list (not automatic).
+                // b) Create a simple JSON file (e.g., notes.json) that lists your notes, and update it manually.
+                // c) Use a trick to list files, which can be brittle.
+
+                // Let's use a method where you maintain a `notes.json` file.
+                // This is the most reliable way for "automatic updates" where you only update
+                // the data file, and the HTML/JS remains the same.
+                //
+                // If you want *zero* manual intervention after adding an HTML file,
+                // you would need a CI/CD pipeline or a GitHub Action to generate `notes.json`
+                // every time you push to the `notes` directory.
+
+                // For this example, let's assume you'll create/update a `notes.json` file.
+                // This is the simplest "automatic" way for GitHub Pages without server-side logic.
+
+                const response = await fetch('notes.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const notes = await response.json();
+
+                if (notes.length === 0) {
+                    notesContainer.innerHTML = '<li>No notes found.</li>';
+                } else {
+                    notes.forEach(note => {
+                        const listItem = document.createElement('li');
+                        listItem.classList.add('note-item');
+
+                        const noteTitle = document.createElement('span');
+                        // Remove .html for display, but use full filename for link
+                        noteTitle.textContent = note.title || note.file.replace('.html', '').replace(/-/g, ' ');
+                        noteTitle.classList.add('note-title');
+
+                        const linkButton = document.createElement('a');
+                        linkButton.href = `notes/${note.file}`;
+                        linkButton.textContent = 'View Note';
+                        linkButton.classList.add('note-button');
+
+                        listItem.appendChild(noteTitle);
+                        listItem.appendChild(linkButton);
+                        notesContainer.appendChild(listItem);
+                    });
+                }
+                loadingMessage.style.display = 'none'; // Hide loading message
+                errorMessage.style.display = 'none';   // Hide error message
+            } catch (error) {
+                console.error('Failed to fetch notes:', error);
+                loadingMessage.style.display = 'none'; // Hide loading message
+                errorMessage.style.display = 'block';  // Show error message
+                notesContainer.innerHTML = '<li>Could not load notes. Please ensure notes.json exists and is valid.</li>';
+            }
+        }
+
+        // Call the function when the page loads
+        document.addEventListener('DOMContentLoaded', fetchNotes);
+    </script>
+</body>
+</html>
+
